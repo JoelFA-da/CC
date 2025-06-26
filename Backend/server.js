@@ -83,7 +83,21 @@ app.post('/calculate', (req, res) => {
 
     let targetCalories;
     switch (goal) {
-      case 'lose': targetCalories = tdee - 500; break;
+      case 'lose':
+        if (bodyFatNum) {
+          if (bodyFatNum > 25) {
+            targetCalories = tdee - (tdee * 0.25); 
+            break;
+          } else if (bodyFatNum > 15 && bodyFatNum <= 25) {
+            targetCalories = tdee - (tdee * 0.20); 
+            break;
+          } else if (bodyFatNum <= 15) {
+            targetCalories = tdee - (tdee * 0.15); 
+            break;
+          }else{
+            targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
+          }
+        }
       case 'gain': targetCalories = tdee + 500; break;
       default: targetCalories = tdee;
     }
