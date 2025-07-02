@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 const path = require('path');
 
 
-app.use(express.static(path.join(__dirname, '../Frontend')));
+app.use('/Frontend', express.static(path.join(__dirname, '../Frontend')));
 
 // Serve login page
 app.get('/login', (req, res) => {
