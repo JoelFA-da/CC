@@ -8,7 +8,7 @@ document.getElementById('signupBtn').addEventListener('click', () => {
 
 // Calculate lean mass when body fat changes
 
-document.getElementById('bodyFat').addEventListener('input', function() {
+document.getElementById('bodyFat').addEventListener('input', function () {
     const bodyFatInput = parseFloat(this.value);
     const weightInput = parseFloat(document.getElementById('weight').value);
     const leanMassField = document.getElementById('leanMass');
@@ -20,7 +20,7 @@ document.getElementById('bodyFat').addEventListener('input', function() {
     }
 });
 // Main calculator functionality
-document.getElementById('calorieForm').addEventListener('submit', async function(e) {
+document.getElementById('calorieForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     // Get form data
@@ -68,7 +68,7 @@ document.getElementById('calorieForm').addEventListener('submit', async function
 
 async function displayResults(data, goal) {
     const resultElement = document.getElementById('results');
-    
+
     // Remove previous composition chart if it exists
     const existingChart = document.getElementById('compositionChart');
     if (existingChart) {
@@ -87,40 +87,97 @@ async function displayResults(data, goal) {
 
     // Add body composition visualization if body fat is provided
     if (data.bodyFat !== null) {
+        const total = 100;
+        const bodyFat = parseFloat(data.bodyFat);
+        const leanMass = total - bodyFat;
+        const weight = parseFloat(document.getElementById('weight').value);
+
         const chartHTML = `
-        <div class="mt-8" id="compositionChart">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Body Composition</h3>
-            <div class="flex items-center justify-center h-64">
-                <div class="relative w-64 h-64">
-                    <div id="fatSlice" class="absolute top-0 left-0 w-full h-full rounded-full border-8 border-indigo-100" 
-                        style="clip-path: polygon(50% 50%, 50% 0%, 100% 0%);"></div>
-                    <div id="leanSlice" class="absolute top-0 left-0 w-full h-full rounded-full border-8 border-indigo-300" 
-                        style="clip-path: polygon(50% 50%, 100% 0%, 100% 100%);"></div>
-                    <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                        <div class="text-center">
-                            <span class="text-3xl font-bold text-indigo-700">${parseFloat(data.bodyFat).toFixed(1)}%</span>
-                            <p class="text-gray-600">Body Fat</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-center space-x-8 mt-4">
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Fat Mass</p>
-                    <p class="font-bold">${(parseFloat(document.getElementById('weight').value) - parseFloat(data.leanMass)).toFixed(1)} kg</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Lean Mass</p>
-                    <p class="font-bold">${parseFloat(data.leanMass).toFixed(1)} kg</p>
-                </div>
-            </div>
-        </div>`;
+    <div class="mt-8" id="compositionChart">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Body Composition</h3>
+      <div class="flex items-center justify-center h-64">
+        <svg viewBox="0 0 36 36" class="w-64 h-64 -rotate-90">
+          <!-- Background Circle -->
+          <circle
+            cx="18"
+            cy="18"
+            r="16"
+            fill="none"
+            stroke="#E5E7EB"
+            stroke-width="4"
+          />
+
+          <!-- Body Fat Arc -->
+          <circle
+            id="fatArc"
+            cx="18"
+            cy="18"
+            r="16"
+            fill="none"
+            stroke="#F87171"
+            stroke-width="4"
+            stroke-dasharray="${bodyFat} ${total - bodyFat}"
+            stroke-dashoffset="0"
+            stroke-linecap="round"
+            style="cursor: pointer"
+          />
+
+          <!-- Lean Mass Arc -->
+          <circle
+            id="leanArc"
+            cx="18"
+            cy="18"
+            r="16"
+            fill="none"
+            stroke="#60A5FA"
+            stroke-width="4"
+            stroke-dasharray="${leanMass} ${bodyFat}"
+            stroke-dashoffset="${-bodyFat}"
+            stroke-linecap="round"
+            style="cursor: pointer"
+          />
+
+          <!-- Center Text Group -->
+          <g transform="rotate(90, 18, 18)">
+            <text id="centerValue" x="18" y="16" text-anchor="middle" fill="#1E3A8A" font-size="3.5" font-weight="bold">
+              ${bodyFat.toFixed(1)}%
+            </text>
+            <text id="centerLabel" x="18" y="21" text-anchor="middle" fill="#6B7280" font-size="2.5">
+              Body Fat
+            </text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="flex justify-center space-x-8 mt-4">
+        <div class="text-center">
+          <p class="text-sm text-gray-500">Fat Mass</p>
+          <p class="font-bold">${(weight * (bodyFat / 100)).toFixed(1)} kg</p>
+        </div>
+        <div class="text-center">
+          <p class="text-sm text-gray-500">Lean Mass</p>
+          <p class="font-bold">${(weight * (leanMass / 100)).toFixed(1)} kg</p>
+        </div>
+      </div>
+    </div>
+  `;
+
         resultElement.insertAdjacentHTML('beforeend', chartHTML);
 
-        // Update pie chart visualization
-        const fatDegrees = (data.bodyFat / 100) * 360;
-        document.getElementById('fatSlice').style.transform = `rotate(${fatDegrees}deg)`;
+        // 🧠 Add interactivity
+        document.getElementById("fatArc").addEventListener("click", () => {
+            document.getElementById("centerValue").textContent = `${bodyFat.toFixed(1)}%`;
+            document.getElementById("centerLabel").textContent = "Body Fat";
+        });
+
+        document.getElementById("leanArc").addEventListener("click", () => {
+            document.getElementById("centerValue").textContent = `${leanMass.toFixed(1)}%`;
+            document.getElementById("centerLabel").textContent = "Lean Mass";
+        });
     }
+
+
+
     // Update macro calculator
     try {
         // Get macros
@@ -134,15 +191,15 @@ async function displayResults(data, goal) {
                 bodyFat: document.getElementById('bodyFat').value || null
             })
         });
-        
+
         const macros = await macroResponse.json();
-        
+
         if (macroResponse.ok) {
             // Update macro displays
             document.getElementById('proteinValue').textContent = macros.protein + ' g';
             document.getElementById('carbsValue').textContent = macros.carbs + ' g';
             document.getElementById('fatsValue').textContent = macros.fat + ' g';
-            
+
             // Update goal text
             const goalText = {
                 'lose': 'lose weight',
@@ -155,10 +212,10 @@ async function displayResults(data, goal) {
         console.error('Macro calculation error:', error);
     }
 
-    
+
     // Update goal text
     let goalText = '';
-    switch(goal) {
+    switch (goal) {
         case 'lose': goalText = 'For losing 0.5kg per week'; break;
         case 'gain': goalText = 'For gaining 0.5kg per week'; break;
         default: goalText = 'For maintaining weight';

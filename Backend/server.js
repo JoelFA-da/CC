@@ -86,15 +86,15 @@ app.post('/calculate', (req, res) => {
       case 'lose':
         if (bodyFatNum) {
           if (bodyFatNum > 25) {
-            targetCalories = tdee - (tdee * 0.25); 
+            targetCalories = tdee - (tdee * 0.25);
             break;
           } else if (bodyFatNum > 15 && bodyFatNum <= 25) {
-            targetCalories = tdee - (tdee * 0.20); 
+            targetCalories = tdee - (tdee * 0.20);
             break;
           } else if (bodyFatNum <= 15) {
-            targetCalories = tdee - (tdee * 0.15); 
+            targetCalories = tdee - (tdee * 0.15);
             break;
-          }else{
+          } else {
             targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
           }
         }
@@ -120,49 +120,75 @@ app.post('/calculate', (req, res) => {
   }
 });
 app.post('/calculatemacros', (req, res) => {
+  console.log('Route /calculatemacros was called');  // Add this line
   try {
-    const { goal, targetCalories, bodyFat, weight, activityLevel } = req.body;
+    const { goal, targetCalories, bodyFat, weight } = req.body;
 
     if (!goal || !targetCalories) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Default ratios based on goal
-    let proteinRatio, carbRatio, fatRatio;
+    // Define macro ratios based on body fat percentage and goal
+    let protein, fat, carbs, leanMass;
+    let calProte, calFat;
+    let proteinGrams, fatGrams, remainingCalories, carbGrams;
 
-    switch (goal) {
-      case 'lose':
-        proteinRatio = 0.35;  // 35%
-        carbRatio = 0.40;     // 40%
-        fatRatio = 0.25;      // 25%
-        break;
-      case 'gain':
-        proteinRatio = 0.30;  // 30%
-        carbRatio = 0.50;     // 50%
-        fatRatio = 0.20;      // 20%
-        break;
-      default: // maintain
-        proteinRatio = 0.25;  // 25%
-        carbRatio = 0.45;     // 45%
-        fatRatio = 0.30;      // 30%
+    leanMass = parseFloat(weight) * (1 - (bodyFat ? parseFloat(bodyFat) / 100 : 0)); // Calculate lean mass in kg
+
+    if (bodyFat) {
+      const bodyFatNum = parseFloat(bodyFat);
+      if (bodyFatNum > 25) {
+        protein = 2.4;
+        fat = 1.1;
+      } else if (bodyFatNum >= 15 && bodyFatNum <= 25) {
+        protein = (goal === 'gain') ? 2.6 : 2.2;
+        fat = (goal === 'gain') ? 1.2 : 1.0;
+      } else {
+        protein = 2.0;
+        fat = 0.8;
+      }
+      // Calculate grams
+
+    } else {
+      // Default macro ratios if body fat is not provided
+      protein = 2.0;
+      fat = 0.8;
+
     }
+    // Calculate grams based on lean mass
+    proteinGrams = Math.round(protein * leanMass);
+    fatGrams = Math.round(fat * leanMass);
+    remainingCalories = targetCalories - (proteinGrams * 4 + fatGrams * 9);
+    carbGrams = Math.round(remainingCalories / 4);
 
-    // Calculate grams (protein/carbs = 4 cal/g, fat = 9 cal/g)
-    const macros = {
-      protein: Math.round((targetCalories * proteinRatio) / 4),
-      carbs: Math.round((targetCalories * carbRatio) / 4),
-      fat: Math.round((targetCalories * fatRatio) / 9)
-    };
-
+    // Calculate calories from macros
+    calProte = proteinGrams * 4;
+    calFat = fatGrams * 9;
+    // Log the calculated values for debugging
+    console.log({
+      leanMass,
+      protein,
+      proteinGrams,
+      fat,
+      fatGrams,
+      remainingCalories,
+      carbGrams,
+      bodyFat, weight, calProte, calFat
+    });
+    // Prepare response
     res.json({
-      ...macros,
+      protein: proteinGrams,
+      fat: fatGrams,
+      carbs: carbGrams,
       message: 'Macro calculation successful'
     });
 
   } catch (error) {
+    console.error('Macro calculation error:', error);
     res.status(500).json({ error: 'Macro calculation failed' });
   }
 });
+
 
 
 
