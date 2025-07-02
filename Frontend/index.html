@@ -207,7 +207,20 @@
                             <option value="extreme">Extreme (very hard exercise & physical job)</option>
                         </select>
                     </div>
-
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="trainingDuration">
+                            How long have you trained regularly?
+                        </label>
+                        <select id="trainingDuration"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required>
+                            <option value="">Select duration</option>
+                            <option value="<6">Less than 6 months</option>
+                            <option value="6-24">6 months – 2 years</option>
+                            <option value=">24">More than 2 years</option>
+                        </select>
+                    </div>
+                   
                     <div>
                         <label class="block text-gray-700 font-medium mb-2">Goal</label>
                         <select id="goal"

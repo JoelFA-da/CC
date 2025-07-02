@@ -31,7 +31,8 @@ document.getElementById('calorieForm').addEventListener('submit', async function
         height: document.getElementById('height').value,
         activityLevel: document.getElementById('activityLevel').value,
         goal: document.getElementById('goal').value,
-        bodyFat: document.getElementById('bodyFat').value || null
+        bodyFat: document.getElementById('bodyFat').value || null,
+        trainingDuration: document.getElementById('trainingDuration').value,
     };
 
     try {

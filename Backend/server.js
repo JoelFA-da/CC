@@ -57,7 +57,7 @@ const calculateTDEE = (bmr, activityLevel) => {
 app.post('/calculate', (req, res) => {
   try {
     // Parse and validate input
-    const { gender, weight, height, age, activityLevel, goal, bodyFat } = req.body;
+    const { gender, weight, height, age, activityLevel, goal, bodyFat, trainingDuration } = req.body;
 
     if (!gender || !weight || !height || !age || !activityLevel) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -81,7 +81,9 @@ app.post('/calculate', (req, res) => {
 
     const tdee = calculateTDEE(bmr, activityLevel);
 
-    let targetCalories;
+    let targetCalories, surplus = 0.20; // Default surplus for weight gain
+    let trainingStatus = "Unknown";
+
     switch (goal) {
       case 'lose':
         if (bodyFatNum) {
@@ -98,10 +100,46 @@ app.post('/calculate', (req, res) => {
             targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
           }
         }
-      case 'gain': targetCalories = tdee + 500; break;
-      default: targetCalories = tdee;
-    }
+      case 'gain':
+        if (bodyFatNum && bodyFatNum >= 25) {
+          // High BF → minimal surplus -> 5% TDEE
+          trainingStatus = "High Body Fat";
+          targetCalories = tdee + tdee * 0.05;
+          break;
+        } else {
+          switch (trainingDuration) {  // assuming this is the name from the frontend
+            case '<6':
+              trainingStatus = "Beginner";
+              surplus = 0.20; // +20% TDEE
+              break;
+            case '6-24':
+              trainingStatus = "Intermediate";
+              surplus = 0.10; // +10% TDEE
+              break;
+            case '>24':
+              trainingStatus = "Advanced";
+              surplus = 0.05; // +5% TDEE
+              break;
+            default:
+              trainingStatus = "Unknown";
+              surplus = 0.10; // fallback to 10%
+              break;
+          }
+          targetCalories = tdee + (tdee * surplus);
 
+        }
+    }
+    if (goal === 'maintain') {
+      targetCalories = tdee; // No change for maintenance
+      trainingStatus = "Maintenance";
+    }
+    console.log({
+      targetCalories,
+      trainingDuration,
+      goal,
+      trainingStatus,
+
+    })
     // Prepare response
     const response = {
       bmr: Math.round(bmr),
@@ -141,8 +179,8 @@ app.post('/calculatemacros', (req, res) => {
         protein = 2.4;
         fat = 1.1;
       } else if (bodyFatNum >= 15 && bodyFatNum <= 25) {
-        protein = (goal === 'gain') ? 2.6 : 2.2;
-        fat = (goal === 'gain') ? 1.2 : 1.0;
+        protein = 2.6; 
+        fat =  1.2;
       } else {
         protein = 2.0;
         fat = 0.8;
@@ -165,16 +203,18 @@ app.post('/calculatemacros', (req, res) => {
     calProte = proteinGrams * 4;
     calFat = fatGrams * 9;
     // Log the calculated values for debugging
-    console.log({
-      leanMass,
-      protein,
-      proteinGrams,
-      fat,
-      fatGrams,
-      remainingCalories,
-      carbGrams,
-      bodyFat, weight, calProte, calFat
-    });
+     console.log({
+       targetCalories,
+       goal,
+       leanMass,
+       protein,
+       proteinGrams,
+       fat,
+       fatGrams,
+       remainingCalories,
+       carbGrams,
+       bodyFat, weight, calProte, calFat, 
+     }); 
     // Prepare response
     res.json({
       protein: proteinGrams,
