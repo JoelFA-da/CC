@@ -7,6 +7,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const path = require('path');
 
+
+app.use(express.static(path.join(__dirname, '../Frontend')));
+
 // Serve login page
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../Frontend/login.html'));
@@ -30,7 +33,6 @@ app.get('/', (req, res) => {
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../Frontend')));
 
 // Calorie calculation formulas
 const calculateBMR = (gender, weight, height, age) => {
