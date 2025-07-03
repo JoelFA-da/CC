@@ -100,9 +100,10 @@ app.post('/calculate', (req, res) => {
               targetCalories = tdee - (tdee * 0.15);
               break;
             }
-            else {
-              targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
-            }
+
+          }
+          else {
+            targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
           }
         } else {
           if (bodyFatNum) {
