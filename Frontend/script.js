@@ -42,8 +42,8 @@ document.getElementById('calorieForm').addEventListener('submit', async function
         submitBtn.innerHTML = `<span class="inline-block animate-spin">↻</span> Calculating...`;
 
         // Send request to server
-        //const response = await fetch('http://localhost:3000/calculate', {
-             const response = await fetch('/calculate', {
+        // const response = await fetch('http://localhost:3000/calculate', {
+        const response = await fetch('/calculate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -185,8 +185,8 @@ async function displayResults(data, goal) {
     // Update macro calculator
     try {
         // Get macros
-       // const macroResponse = await fetch('http://localhost:3000/calculatemacros', {
-             const macroResponse = await fetch('/calculatemacros', {
+        //const macroResponse = await fetch('http://localhost:3000/calculatemacros', {
+        const macroResponse = await fetch('/calculatemacros', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

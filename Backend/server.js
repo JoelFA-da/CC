@@ -86,128 +86,129 @@ app.post('/calculate', (req, res) => {
     let targetCalories, surplus = 0.20; // Default surplus for weight gain
     let trainingStatus = "Unknown";
 
-    switch (goal) {
-      case 'lose':
-        if (gender.toLowerCase() === 'male') {
-          if (bodyFatNum) {
-            if (bodyFatNum > 25) {
-              targetCalories = tdee - (tdee * 0.25);
-              break;
-            } else if (bodyFatNum > 15 && bodyFatNum <= 25) {
-              targetCalories = tdee - (tdee * 0.20);
-              break;
-            } else if (bodyFatNum <= 15) {
-              targetCalories = tdee - (tdee * 0.15);
-              break;
-            }
-
+    if (goal == 'lose') {
+      if (gender.toLowerCase() === 'male') {
+        if (bodyFatNum) {
+          if (bodyFatNum > 25) {
+            targetCalories = tdee - (tdee * 0.25);
+            
+          } else if (bodyFatNum > 15 && bodyFatNum <= 25) {
+            targetCalories = tdee - (tdee * 0.20);
+           
+          } else if (bodyFatNum <= 15) {
+            targetCalories = tdee - (tdee * 0.15);
+           
           }
-          else {
-            targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
+
+        }
+        else {
+          targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
+        }
+      } else {
+        if (bodyFatNum) {
+          if (bodyFatNum > 30) {
+            targetCalories = tdee - (tdee * 0.25);
+            
+          } else if (bodyFatNum > 22 && bodyFatNum <= 30) {
+            targetCalories = tdee - (tdee * 0.20);
+           
+          } else if (bodyFatNum <= 22) {
+            targetCalories = tdee - (tdee * 0.15);
+           
           }
         } else {
-          if (bodyFatNum) {
-            if (bodyFatNum > 30) {
-              targetCalories = tdee - (tdee * 0.25);
-              break;
-            } else if (bodyFatNum > 22 && bodyFatNum <= 30) {
-              targetCalories = tdee - (tdee * 0.20);
-              break;
-            } else if (bodyFatNum <= 22) {
-              targetCalories = tdee - (tdee * 0.15);
-              break;
-            }
-          }
-          else {
-            targetCalories = ttdee - (tdee * 0.20); // Default 20% deficit for general weight loss
-          }
-        }
-      case 'gain':
-        if (gender === 'male') {
-          if (bodyFatNum && bodyFatNum >= 25) {
-            // High BF → minimal surplus -> 5% TDEE
-            trainingStatus = "High Body Fat";
-            targetCalories = tdee + tdee * 0.05;
-            break;
-          } else {
-            switch (trainingDuration) {  // assuming this is the name from the frontend
-              case '<6':
-                trainingStatus = "Beginner";
-                surplus = 0.20; // +20% TDEE
-                break;
-              case '6-24':
-                trainingStatus = "Intermediate";
-                surplus = 0.10; // +10% TDEE
-                break;
-              case '>24':
-                trainingStatus = "Advanced";
-                surplus = 0.05; // +5% TDEE
-                break;
-              default:
-                trainingStatus = "Unknown";
-                surplus = 0.10; // fallback to 10%
-                break;
-            }
-            targetCalories = tdee + (tdee * surplus);
+          targetCalories = tdee - (tdee * 0.20); // Default 20% deficit for general weight loss
+          console.log('No body fat provided, using default 20% deficit', targetCalories);
 
-          }
-        } else {
-          if (bodyFatNum && bodyFatNum >= 30) {
-            // High BF → minimal surplus -> 5% TDEE
-            trainingStatus = "High Body Fat";
-            targetCalories = tdee + tdee * 0.05;
-            break;
-          } else {
-            switch (trainingDuration) {  // assuming this is the name from the frontend
-              case '<6':
-                trainingStatus = "Beginner";
-                surplus = 0.15; // +15% TDEE
-                break;
-              case '6-24':
-                trainingStatus = "Intermediate";
-                surplus = 0.08; // +8% TDEE
-                break;
-              case '>24':
-                trainingStatus = "Advanced";
-                surplus = 0.05; // +5% TDEE
-                break;
-              default:
-                trainingStatus = "Unknown";
-                surplus = 0.08; // fallback to 10%
-                break;
-            }
-            targetCalories = tdee + (tdee * surplus);
-          }
         }
+      }
     }
+    if (goal === 'gain') {
+      if (gender === 'male') {
+        if (bodyFatNum && bodyFatNum >= 25) {
+          // High BF → minimal surplus -> 5% TDEE
+          trainingStatus = "High Body Fat";
+          targetCalories = tdee + tdee * 0.05;
+          
+        } else {
+          switch (trainingDuration) {  // assuming this is the name from the frontend
+            case '<6':
+              trainingStatus = "Beginner";
+              surplus = 0.20; // +20% TDEE
+              break;
+            case '6-24':
+              trainingStatus = "Intermediate";
+              surplus = 0.10; // +10% TDEE
+              break;
+            case '>24':
+              trainingStatus = "Advanced";
+              surplus = 0.05; // +5% TDEE
+              break;
+            default:
+              trainingStatus = "Unknown";
+              surplus = 0.10; // fallback to 10%
+              break;
+          }
+          targetCalories = tdee + (tdee * surplus);
+          console.log('Target calories for gain:', targetCalories);
+        }
+      } else {
+        if (bodyFatNum && bodyFatNum >= 30) {
+          // High BF → minimal surplus -> 5% TDEE
+          trainingStatus = "High Body Fat";
+          targetCalories = tdee + tdee * 0.05;
+        } else {
+          switch (trainingDuration) {  // assuming this is the name from the frontend
+            case '<6':
+              trainingStatus = "Beginner";
+              surplus = 0.15; // +15% TDEE
+              break;
+            case '6-24':
+              trainingStatus = "Intermediate";
+              surplus = 0.08; // +8% TDEE
+              break;
+            case '>24':
+              trainingStatus = "Advanced";
+              surplus = 0.05; // +5% TDEE
+              break;
+            default:
+              trainingStatus = "Unknown";
+              surplus = 0.08; // fallback to 10%
+              break;
+          }
+          targetCalories = tdee + (tdee * surplus);
+        }
+      }
+    }
+  
 
     if (goal === 'maintain') {
-      targetCalories = tdee; // No change for maintenance
-      trainingStatus = "Maintenance";
-    }
-    console.log({
-      targetCalories,
-      trainingDuration,
-      // goal,
-      //  trainingStatus,
-      gender,
-    })
-    // Prepare response
-    const response = {
-      bmr: Math.round(bmr),
-      tdee: Math.round(tdee),
-      targetCalories: Math.round(targetCalories),
-      bodyFat: bodyFatNum,
-      leanMass: leanMass ? parseFloat(leanMass.toFixed(1)) : null,
-      message: 'Calculation successful'
-    };
-
-    res.json(response);
-
-  } catch (error) {
-    console.error('Calculation error:', error);
-    res.status(500).json({ error: 'Server error during calculation' });
+    targetCalories = tdee; // No change for maintenance
+    trainingStatus = "Maintenance";
   }
+  console.log({
+    targetCalories,
+    trainingDuration,
+    // goal,
+    //  trainingStatus,
+    gender,
+  })
+  // Prepare response
+  const response = {
+    bmr: Math.round(bmr),
+    tdee: Math.round(tdee),
+    targetCalories: Math.round(targetCalories),
+    bodyFat: bodyFatNum,
+    leanMass: leanMass ? parseFloat(leanMass.toFixed(1)) : null,
+    message: 'Calculation successful'
+  };
+
+  res.json(response);
+
+} catch (error) {
+  console.error('Calculation error:', error);
+  res.status(500).json({ error: 'Server error during calculation' });
+}
 });
 app.post('/calculatemacros', (req, res) => {
   console.log('Route /calculatemacros was called');  // Add this line
