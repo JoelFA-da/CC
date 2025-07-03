@@ -42,7 +42,8 @@ document.getElementById('calorieForm').addEventListener('submit', async function
         submitBtn.innerHTML = `<span class="inline-block animate-spin">↻</span> Calculating...`;
 
         // Send request to server
-        const response = await fetch('/calculate', {
+        //const response = await fetch('http://localhost:3000/calculate', {
+             const response = await fetch('/calculate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -96,7 +97,8 @@ async function displayResults(data, goal) {
 
         const chartHTML = `
     <div class="mt-8" id="compositionChart">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">Body Composition</h3>
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Composición corporal
+</h3>
       <div class="flex items-center justify-center h-64">
         <svg viewBox="0 0 36 36" class="w-64 h-64 -rotate-90">
           <!-- Background Circle -->
@@ -145,7 +147,7 @@ async function displayResults(data, goal) {
               ${bodyFat.toFixed(1)}%
             </text>
             <text id="centerLabel" x="18" y="21" text-anchor="middle" fill="#6B7280" font-size="2.5">
-              Body Fat
+              Masa grasa
             </text>
           </g>
         </svg>
@@ -153,11 +155,11 @@ async function displayResults(data, goal) {
 
       <div class="flex justify-center space-x-8 mt-4">
         <div class="text-center">
-          <p class="text-sm text-gray-500">Fat Mass</p>
+          <p class="text-sm text-gray-500">Masa grasa</p>
           <p class="font-bold">${(weight * (bodyFat / 100)).toFixed(1)} kg</p>
         </div>
         <div class="text-center">
-          <p class="text-sm text-gray-500">Lean Mass</p>
+          <p class="text-sm text-gray-500">Masa magra</p>
           <p class="font-bold">${(weight * (leanMass / 100)).toFixed(1)} kg</p>
         </div>
       </div>
@@ -169,12 +171,12 @@ async function displayResults(data, goal) {
         // 🧠 Add interactivity
         document.getElementById("fatArc").addEventListener("click", () => {
             document.getElementById("centerValue").textContent = `${bodyFat.toFixed(1)}%`;
-            document.getElementById("centerLabel").textContent = "Body Fat";
+            document.getElementById("centerLabel").textContent = "Masa grasa";
         });
 
         document.getElementById("leanArc").addEventListener("click", () => {
             document.getElementById("centerValue").textContent = `${leanMass.toFixed(1)}%`;
-            document.getElementById("centerLabel").textContent = "Lean Mass";
+            document.getElementById("centerLabel").textContent = "Masa magra";
         });
     }
 
@@ -183,13 +185,15 @@ async function displayResults(data, goal) {
     // Update macro calculator
     try {
         // Get macros
-        const macroResponse = await fetch('/calculatemacros', {
+       // const macroResponse = await fetch('http://localhost:3000/calculatemacros', {
+             const macroResponse = await fetch('/calculatemacros', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 goal: goal,
                 targetCalories: data.targetCalories,
                 weight: document.getElementById('weight').value,
+                gender: document.getElementById('gender').value,
                 bodyFat: document.getElementById('bodyFat').value || null
             })
         });
@@ -204,9 +208,9 @@ async function displayResults(data, goal) {
 
             // Update goal text
             const goalText = {
-                'lose': 'lose weight',
-                'gain': 'gain muscle',
-                'maintain': 'maintain weight'
+                'lose': 'déficit calórico',
+                'gain': 'superávit calórico',
+                'maintain': 'balance calórico'
             }[goal];
             document.getElementById('macroGoalText').textContent = goalText;
         }
@@ -218,9 +222,9 @@ async function displayResults(data, goal) {
     // Update goal text
     let goalText = '';
     switch (goal) {
-        case 'lose': goalText = 'For losing 0.5kg per week'; break;
-        case 'gain': goalText = 'For gaining 0.5kg per week'; break;
-        default: goalText = 'For maintaining weight';
+        case 'lose': goalText = 'Para perder 0.5kg por semana'; break;
+        case 'gain': goalText = 'Para ganar 0.5kg por semana'; break;
+        default: goalText = 'Para mantener tu peso actual'; break;
     }
     document.getElementById('goalText').textContent = goalText;
 
@@ -233,4 +237,40 @@ async function displayResults(data, goal) {
     // Show results with animation
     resultElement.classList.remove('hidden');
     resultElement.classList.add('animate__fadeInUp');
+    /*
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const htmlElement = document.documentElement;
+    
+    
+    
+        // Check for saved preference or system preference
+       if (localStorage.getItem('darkMode') === 'enabled' || 
+           (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+           enableDarkMode();
+       }
+    
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', () => {
+            if (htmlElement.classList.contains('dark')) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        });
+        function enableDarkMode() {
+            htmlElement.classList.add('dark');
+            darkModeIcon.classList.replace('fa-moon', 'fa-sun');
+            localStorage.setItem('darkMode', 'enabled');
+        }
+        function disableDarkMode() {
+           htmlElement.classList.remove('dark');
+           darkModeIcon.classList.replace('fa-sun', 'fa-moon');
+           localStorage.setItem('darkMode', 'disabled');
+       }
+    
+        // Scroll to results
+        resultElement.scrollIntoView({ behavior: 'smooth' });
+    */
 }
