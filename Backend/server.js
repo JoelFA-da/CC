@@ -99,7 +99,8 @@ app.post('/calculate', (req, res) => {
             } else if (bodyFatNum <= 15) {
               targetCalories = tdee - (tdee * 0.15);
               break;
-            } else {
+            }
+            else {
               targetCalories = tdee - 500; // Default 500 cal deficit for general weight loss
             }
           }
@@ -114,9 +115,10 @@ app.post('/calculate', (req, res) => {
             } else if (bodyFatNum <= 22) {
               targetCalories = tdee - (tdee * 0.15);
               break;
-            } else {
-              targetCalories = ttdee - (tdee * 0.20); // Default 20% deficit for general weight loss
             }
+          }
+          else {
+            targetCalories = ttdee - (tdee * 0.20); // Default 20% deficit for general weight loss
           }
         }
       case 'gain':
@@ -234,71 +236,71 @@ app.post('/calculatemacros', (req, res) => {
           protein = 2.0;
           fat = 0.8;
         }
-        } else {
-          // Default macro ratios if body fat is not provided
-          protein = 2.0;
-          fat = 0.8;
-        }
-      } else if(gender === 'female' ){
-        if (bodyFat) {
-          const bodyFatNum = parseFloat(bodyFat);
-          if (bodyFatNum > 30) {
-            protein = 2.2;
-            fat = 1.2;
-          } else if (bodyFatNum >= 22 && bodyFatNum <= 30) {
-            protein = 2.4;
-            fat = 1.3;
-          } else {
-            protein = 2.6;
-            fat = 1.3;
-          }
-        } else {
-          // Default macro ratios if body fat is not provided
-          protein = 1.8;
-          fat = 0.9;
-        }
+      } else {
+        // Default macro ratios if body fat is not provided
+        protein = 2.0;
+        fat = 0.8;
       }
-  
-      // Calculate grams based on lean mass
-      proteinGrams = Math.round(protein * leanMass);
-      fatGrams = Math.round(fat * leanMass);
-      remainingCalories = targetCalories - (proteinGrams * 4 + fatGrams * 9);
-      carbGrams = Math.round(remainingCalories / 4);
-  
-      // Calculate calories from macros
-      calProte = proteinGrams * 4;
-      calFat = fatGrams * 9;
-      // Log the calculated values for debugging
-         console.log({
-          gender,         
-            goal,
-          targetCalories,
-           bodyFat,
-
-           /*
-           activityLevel, 
-           proteinGrams,
-           fat,
-           fatGrams,
-           remainingCalories,
-           carbGrams,
-           bodyFat, weight, calProte, calFat, 
-          */
-           }); 
-        
-      // Prepare response
-      res.json({
-        protein: proteinGrams,
-        fat: fatGrams,
-        carbs: carbGrams,
-        message: 'Macro calculation successful'
-      });
-  
-    } catch (error) {
-      console.error('Macro calculation error:', error);
-      res.status(500).json({ error: 'Macro calculation failed' });
+    } else if (gender === 'female') {
+      if (bodyFat) {
+        const bodyFatNum = parseFloat(bodyFat);
+        if (bodyFatNum > 30) {
+          protein = 2.2;
+          fat = 1.2;
+        } else if (bodyFatNum >= 22 && bodyFatNum <= 30) {
+          protein = 2.4;
+          fat = 1.3;
+        } else {
+          protein = 2.6;
+          fat = 1.3;
+        }
+      } else {
+        // Default macro ratios if body fat is not provided
+        protein = 1.8;
+        fat = 0.9;
+      }
     }
-  });
+
+    // Calculate grams based on lean mass
+    proteinGrams = Math.round(protein * leanMass);
+    fatGrams = Math.round(fat * leanMass);
+    remainingCalories = targetCalories - (proteinGrams * 4 + fatGrams * 9);
+    carbGrams = Math.round(remainingCalories / 4);
+
+    // Calculate calories from macros
+    calProte = proteinGrams * 4;
+    calFat = fatGrams * 9;
+    // Log the calculated values for debugging
+    console.log({
+      gender,
+      goal,
+      targetCalories,
+      bodyFat,
+
+      /*
+      activityLevel, 
+      proteinGrams,
+      fat,
+      fatGrams,
+      remainingCalories,
+      carbGrams,
+      bodyFat, weight, calProte, calFat, 
+     */
+    });
+
+    // Prepare response
+    res.json({
+      protein: proteinGrams,
+      fat: fatGrams,
+      carbs: carbGrams,
+      message: 'Macro calculation successful'
+    });
+
+  } catch (error) {
+    console.error('Macro calculation error:', error);
+    res.status(500).json({ error: 'Macro calculation failed' });
+  }
+});
 
 
 
