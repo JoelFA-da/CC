@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-
+const mysql = require('mysql2/promise');
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const path = require('path');
@@ -29,11 +30,111 @@ app.get('/', (req, res) => {
 
 
 
+let db;
+
+async function connectToDatabase() {
+  try {
+    db = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT
+    });
+    console.log('Conexión exitosa a la base de datos');
+    return db;
+  } catch (error) {
+    console.error('Error al conectar a la base de datos:', error);
+  }
+}
+// Llama a la función para conectar
+connectToDatabase();
+
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+app.post('/login', async (req, res) => {
+  console.log('Cuerpo de la solicitud:', req.body); // Agrega esta línea para depurar
+  const { email, password } = req.body;
+
+  try {
+    //console.log('Prueba', email); // Log the email for debugging
+
+    if (!db) {
+      return res.status(500).json({ message: "No se pudo establecer la conexión a la base de datos" });
+    }
+
+
+    const [rows] = await db.execute(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: "Usuario no encontrado" });
+    }
+
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+
+    // Comparación directa (sin bcrypt)
+    if (password !== user.password) {
+      return res.status(401).json({ message: "Contraseña incorrecta (modo sin hash)" });
+    }
+
+    // Opcional: devolver token o datos básicos
+    res.json({ message: "Login exitoso", user: { id: user.id, name: user.name, role: user.role } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+});
+
+
+
+app.get("/clientes", async (req, res) => {
+    const nutriId = req.query.nutritionist_id;
+
+    if (!nutriId) {
+        return res.status(400).json({ message: "Falta el parámetro nutritionist_id" });
+    }
+
+    try {
+        const [rows] = await db.query(
+            "SELECT id, name, email FROM clients WHERE nutritionist_id = ?",
+            [nutriId]
+        );
+
+        res.json(rows);
+    } catch (error) {
+        console.error("Error obteniendo clientes:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+});
+
+app.get("/report", async (req, res) => {
+    const nutriId = req.query.nutritionist_id;
+
+    if (!nutriId) {
+        return res.status(400).json({ message: "Falta el parámetro client_id" });
+    }
+
+    try {
+        const [rows] = await db.query(
+            "SELECT weight, protein, height FROM client_records WHERE client_id = ?",
+            [nutriId]
+        );
+
+        res.json(rows);
+    } catch (error) {
+        console.error("Error obteniendo clientes:", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+});
 // Calorie calculation formulas
 const calculateBMR = (gender, weight, height, age) => {
   // Mifflin-St Jeor Equation
@@ -91,13 +192,13 @@ app.post('/calculate', (req, res) => {
         if (bodyFatNum) {
           if (bodyFatNum > 25) {
             targetCalories = tdee - (tdee * 0.25);
-            
+
           } else if (bodyFatNum > 15 && bodyFatNum <= 25) {
             targetCalories = tdee - (tdee * 0.20);
-           
+
           } else if (bodyFatNum <= 15) {
             targetCalories = tdee - (tdee * 0.15);
-           
+
           }
 
         }
@@ -108,13 +209,13 @@ app.post('/calculate', (req, res) => {
         if (bodyFatNum) {
           if (bodyFatNum > 30) {
             targetCalories = tdee - (tdee * 0.25);
-            
+
           } else if (bodyFatNum > 22 && bodyFatNum <= 30) {
             targetCalories = tdee - (tdee * 0.20);
-           
+
           } else if (bodyFatNum <= 22) {
             targetCalories = tdee - (tdee * 0.15);
-           
+
           }
         } else {
           targetCalories = tdee - (tdee * 0.20); // Default 20% deficit for general weight loss
@@ -129,7 +230,7 @@ app.post('/calculate', (req, res) => {
           // High BF → minimal surplus -> 5% TDEE
           trainingStatus = "High Body Fat";
           targetCalories = tdee + tdee * 0.05;
-          
+
         } else {
           switch (trainingDuration) {  // assuming this is the name from the frontend
             case '<6':
@@ -180,35 +281,35 @@ app.post('/calculate', (req, res) => {
         }
       }
     }
-  
+
 
     if (goal === 'maintain') {
-    targetCalories = tdee; // No change for maintenance
-    trainingStatus = "Maintenance";
+      targetCalories = tdee; // No change for maintenance
+      trainingStatus = "Maintenance";
+    }
+    console.log({
+      targetCalories,
+      trainingDuration,
+      // goal,
+      //  trainingStatus,
+      gender,
+    })
+    // Prepare response
+    const response = {
+      bmr: Math.round(bmr),
+      tdee: Math.round(tdee),
+      targetCalories: Math.round(targetCalories),
+      bodyFat: bodyFatNum,
+      leanMass: leanMass ? parseFloat(leanMass.toFixed(1)) : null,
+      message: 'Calculation successful'
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Calculation error:', error);
+    res.status(500).json({ error: 'Server error during calculation' });
   }
-  console.log({
-    targetCalories,
-    trainingDuration,
-    // goal,
-    //  trainingStatus,
-    gender,
-  })
-  // Prepare response
-  const response = {
-    bmr: Math.round(bmr),
-    tdee: Math.round(tdee),
-    targetCalories: Math.round(targetCalories),
-    bodyFat: bodyFatNum,
-    leanMass: leanMass ? parseFloat(leanMass.toFixed(1)) : null,
-    message: 'Calculation successful'
-  };
-
-  res.json(response);
-
-} catch (error) {
-  console.error('Calculation error:', error);
-  res.status(500).json({ error: 'Server error during calculation' });
-}
 });
 app.post('/calculatemacros', (req, res) => {
   console.log('Route /calculatemacros was called');  // Add this line
@@ -303,7 +404,6 @@ app.post('/calculatemacros', (req, res) => {
     res.status(500).json({ error: 'Macro calculation failed' });
   }
 });
-
 
 
 
